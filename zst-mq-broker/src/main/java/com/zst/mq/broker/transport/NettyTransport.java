@@ -64,7 +64,8 @@ public class NettyTransport {
         @Override
         protected void initChannel(Channel channel) throws Exception {
             channel.pipeline()
-                    .addLast();
+                    .addLast(new FrameDecoder())
+                    .addLast(new FrameEncoder());
         }
     }
 }
