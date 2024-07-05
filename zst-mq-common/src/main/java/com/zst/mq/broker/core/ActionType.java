@@ -32,4 +32,20 @@ public interface ActionType {
      * 发布确认
      */
     int PUBLISH_ACK = 101;
+    /**
+     * 操作执行成功
+     */
+    int OK = 102;
+
+
+    // SERVER ERROR
+
+    /**
+     * 消费者不存在
+     */
+    int CONSUMER_NOT_EXIST = 201;
+    /**
+     * 请求数据错误
+     */
+    int REQUEST_ERROR = 202;
 }
