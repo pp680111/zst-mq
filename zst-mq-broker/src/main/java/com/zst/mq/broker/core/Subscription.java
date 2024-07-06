@@ -7,6 +7,6 @@ import lombok.Setter;
 @Setter
 public class Subscription {
     private String consumerId;
-    private String queueId;
+    private String queueName;
     private long offset;
 }

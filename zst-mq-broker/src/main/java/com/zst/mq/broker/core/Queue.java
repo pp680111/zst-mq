@@ -8,9 +8,23 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class Queue {
     private BlockingQueue<QueueMessage> queue;
+    private String name;
 
     public Queue() {
         queue = new LinkedBlockingQueue<>();
+    }
+
+    /**
+     * 获取队列的当前偏移量
+     * @return
+     */
+    public long currentOffset() {
+        QueueMessage headMessage = queue.peek();
+        if (headMessage != null) {
+            return headMessage.getOffset();
+        }
+
+        return 0;
     }
 
     /**

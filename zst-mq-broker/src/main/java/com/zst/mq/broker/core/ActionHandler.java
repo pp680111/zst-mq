@@ -1,5 +1,6 @@
 package com.zst.mq.broker.core;
 
+import com.zst.mq.broker.core.frame.SubscribeRequestFrame;
 import com.zst.mq.broker.utils.StringUtils;
 
 public class ActionHandler {
@@ -39,5 +40,13 @@ public class ActionHandler {
         }
 
         return CommonReply.REQUEST_ERROR;
+    }
+
+    private ActionFrame handleSubscribeQueue(ActionFrame frame) {
+        String consumerId = frame.getConsumerId();
+        SubscribeRequestFrame request = SubscribeRequestFrame.fromActionFrame(frame);
+
+        Subscription subscription = broker.createSubscription(consumerId, request.getQueueName());
+        // TODO 构建返回结果
     }
 }
