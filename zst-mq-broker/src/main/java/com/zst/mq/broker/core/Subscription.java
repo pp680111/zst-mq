@@ -35,6 +35,10 @@ public class Subscription {
         offsetMap.put(queueName, initialOffset);
     }
 
+    public boolean checkQueueSubscription(String queueName) {
+        return queueMap.contains(queueName);
+    }
+
     /**
      * 返回对订阅的队列的消费偏移量
      * @return

@@ -1,7 +1,6 @@
 package com.zst.mq.broker.core;
 
 import com.zst.mq.broker.core.exception.BrokerException;
-import com.zst.mq.broker.utils.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -105,6 +104,28 @@ public class Broker {
         }
 
         queue.addMessage(message);
+    }
+
+    /**
+     * 获取消息
+     * @param consumerId
+     * @param queueName
+     * @param beginOffset
+     * @param maxBatch
+     * @return
+     */
+    public List<Message> fetchMessage(String consumerId, String queueName, long beginOffset, int maxBatch) {
+        Subscription subscription = subscriptions.get(consumerId);
+        if (subscription == null) {
+            throw new BrokerException(ErrorCode.CONSUMER_NOT_EXIST);
+        }
+
+        Queue queue = queueMap.get(queueName);
+        if (queue == null) {
+            throw new BrokerException(ErrorCode.QUEUE_NOT_EXIST);
+        }
+
+        return queue.fetchMessage(beginOffset, maxBatch);
     }
 
     private Consumer createConsumer(String consumerId) {

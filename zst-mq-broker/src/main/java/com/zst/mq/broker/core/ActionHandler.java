@@ -2,12 +2,10 @@ package com.zst.mq.broker.core;
 
 import com.alibaba.fastjson2.JSON;
 import com.zst.mq.broker.core.exception.BrokerException;
-import com.zst.mq.broker.core.frame.FetchOffsetResponseFrame;
-import com.zst.mq.broker.core.frame.PublishAckFrame;
-import com.zst.mq.broker.core.frame.PublishMessageFrame;
-import com.zst.mq.broker.core.frame.SubscribeRequestFrame;
+import com.zst.mq.broker.core.frame.*;
 import com.zst.mq.broker.utils.StringUtils;
 
+import java.util.List;
 import java.util.Map;
 
 public class ActionHandler {
@@ -34,6 +32,7 @@ public class ActionHandler {
             case ActionType.FETCH_CONSUMPTION_OFFSET:
                 return handleFetchConsumptionOffset(frame);
             case ActionType.FETCH_MESSAGE:
+                return handleFetchMessage(frame);
             case ActionType.SUBMIT_OFFSET:
                 break;
         }
@@ -115,6 +114,27 @@ public class ActionHandler {
         ActionFrame result = new ActionFrame();
         result.setAction(ActionType.PUBLISH_ACK);
         result.setContent(JSON.toJSONString(publishAckFrame));
+        return result;
+    }
+
+    /**
+     * 处理拉取消息的请求
+     * @param frame
+     * @return
+     */
+    private ActionFrame handleFetchMessage(ActionFrame frame) {
+        FetchMessageRequestFrame requestFrame = FetchMessageRequestFrame.fromActionFrame(frame);
+        if (StringUtils.isEmpty(requestFrame.getQueueName())) {
+            return CommonReply.REQUEST_ERROR;
+        }
+
+        List<Message> fetchResult = broker.fetchMessage(frame.getConsumerId(), requestFrame.getQueueName(),
+                requestFrame.getBeginOffset(), requestFrame.getMaxBatch());
+        FetchMessageResponseFrame responseFrame = new FetchMessageResponseFrame(fetchResult);
+
+        ActionFrame result = new ActionFrame();
+        result.setAction(ActionType.FETCH_MESSAGE_RESPONSE);
+        result.setContent(JSON.toJSONString(responseFrame));
         return result;
     }
 }

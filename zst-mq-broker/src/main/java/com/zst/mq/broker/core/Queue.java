@@ -3,15 +3,14 @@ package com.zst.mq.broker.core;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.*;
 
 public class Queue {
-    private BlockingQueue<QueueMessage> queue;
+    private Deque<QueueMessage> queue;
     private String name;
 
     public Queue() {
-        queue = new LinkedBlockingQueue<>();
+        queue = new LinkedList<>();
     }
 
     /**
@@ -19,7 +18,7 @@ public class Queue {
      * @return
      */
     public long currentOffset() {
-        QueueMessage headMessage = queue.peek();
+        QueueMessage headMessage = queue.peekLast();
         if (headMessage != null) {
             return headMessage.getOffset();
         }
@@ -43,6 +42,30 @@ public class Queue {
     }
 
     /**
+     * 从指定的offset开始，获取指定最大数量的消息
+     * @param beginOffset
+     * @param batchNum
+     * @return
+     */
+    public List<Message> fetchMessage(long beginOffset, int batchNum) {
+        if (queue.isEmpty() || queue.peek().getOffset() <= beginOffset) {
+            return Collections.emptyList();
+        }
+
+        List<Message> result = new ArrayList<>();
+        for (QueueMessage queueMessage : queue) {
+            if (queueMessage.getOffset() > beginOffset) {
+                result.add(queueMessage.getMessageForFetch());
+                if (result.size() >= batchNum) {
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * 在Queue中使用的消息结构，对消息体进行了额外的封装
      */
     @Setter
@@ -50,5 +73,23 @@ public class Queue {
     private class QueueMessage {
         private Message message;
         private long offset;
+
+        /**
+         * 将包裹的消息复制一份返回
+         *
+         * 复制的目的是防止消息体的引用被拿出去之后修改了，保持消息本身的不变
+         * @return
+         */
+        public Message getMessageForFetch() {
+            Message message = new Message();
+            message.setContent(this.message.getContent());
+
+            Map<String, String> originProperties = this.message.getProperties();
+            Map<String, String> newProperties = new HashMap<>();
+            newProperties.put("offset", Long.toString(this.offset));
+            newProperties.putAll(originProperties);
+            message.setProperties(newProperties);
+            return message;
+        }
     }
 }

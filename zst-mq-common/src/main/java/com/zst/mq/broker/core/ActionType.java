@@ -40,7 +40,14 @@ public interface ActionType {
      * 操作执行成功
      */
     int OK = 102;
+    /**
+     * 拉取消息消费偏移量的响应
+     */
     int FETCH_CONSUMPTION_OFFSET_RESPONSE = 103;
+    /**
+     * 获取消息的响应
+     */
+    int FETCH_MESSAGE_RESPONSE = 104;
 
 
     // SERVER ERROR

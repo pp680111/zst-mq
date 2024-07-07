@@ -21,4 +21,13 @@ public class Message {
     public String getMessageId() {
         return properties.get("messageId");
     }
+
+    public long getOffset() {
+        String offset = properties.get("offset");
+        if (offset == null) {
+            return -1L;
+        }
+
+        return Long.parseLong(offset);
+    }
 }
