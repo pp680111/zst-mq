@@ -28,6 +28,21 @@ public class Queue {
     }
 
     /**
+     * 添加消息
+     * @param message
+     * @return
+     */
+    public long addMessage(Message message) {
+        synchronized (this) {
+            QueueMessage queueMessage = new QueueMessage();
+            queueMessage.setMessage(message);
+            queueMessage.setOffset(currentOffset() + 1);
+            queue.add(queueMessage);
+            return queueMessage.getOffset();
+        }
+    }
+
+    /**
      * 在Queue中使用的消息结构，对消息体进行了额外的封装
      */
     @Setter

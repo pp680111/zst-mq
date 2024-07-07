@@ -1,6 +1,10 @@
 package com.zst.mq.broker.core;
 
+import com.zst.mq.broker.core.exception.BrokerException;
+import com.zst.mq.broker.utils.StringUtils;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Broker {
@@ -56,28 +60,51 @@ public class Broker {
      * @param queueName
      * @return
      */
-    public Subscription createSubscription(String consumerId, String queueName) {
-        Subscription subscription = subscriptions.get(consumerId);
-        if (subscription != null) {
-            throw new RuntimeException("已存在订阅关系");
-        }
-
+    public Subscription addSubscription(String consumerId, String queueName) {
         Queue queue = queueMap.get(queueName);
         if (queue == null) {
-            throw new RuntimeException("不存在该队列");
+            throw new BrokerException(ErrorCode.QUEUE_NOT_EXIST);
         }
 
         Consumer consumer = consumerMap.get(consumerId);
         if (consumer == null) {
-            throw new RuntimeException("当前消费者未注册");
+            throw new BrokerException(ErrorCode.CONSUMER_NOT_EXIST);
         }
 
-        subscription = new Subscription();
-        subscription.setConsumerId(consumerId);
-        subscription.setQueueName(queueName);
-        subscription.setOffset(queue.currentOffset());
-        subscriptions.put(consumerId, subscription);
+        Subscription subscription = subscriptions.get(consumerId);
+        if (subscription == null) {
+            subscription = new Subscription();
+            subscription.setConsumerId(consumerId);
+            subscriptions.put(consumerId, subscription);
+        }
+
+        subscription.addQueueSubscribe(queueName, queue.currentOffset());
         return subscription;
+    }
+
+    public Map<String, Long> queryConsumerSubscriptionOffsets(String consumerId) {
+        Subscription subscription = subscriptions.get(consumerId);
+        if (subscription == null) {
+            throw new BrokerException(ErrorCode.CONSUMER_NOT_EXIST);
+        }
+
+        return subscription.getOffsetMap();
+    }
+
+    /**
+     * 发布消息到指定队列中
+     */
+    public void publishMessages(Message message) {
+        if (message == null) {
+            throw new IllegalArgumentException();
+        }
+
+        Queue queue = queueMap.get(message.getQueueName());
+        if (queue == null) {
+            throw new BrokerException(ErrorCode.QUEUE_NOT_EXIST);
+        }
+
+        queue.addMessage(message);
     }
 
     private Consumer createConsumer(String consumerId) {

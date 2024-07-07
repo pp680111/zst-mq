@@ -13,4 +13,12 @@ import java.util.Map;
 public class Message {
     private Map<String, String> properties;
     private String content;
+
+    public String getQueueName() {
+        return properties.get("queue");
+    }
+
+    public String getMessageId() {
+        return properties.get("messageId");
+    }
 }

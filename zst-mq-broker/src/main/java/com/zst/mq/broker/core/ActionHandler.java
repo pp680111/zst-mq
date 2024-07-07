@@ -1,7 +1,14 @@
 package com.zst.mq.broker.core;
 
+import com.alibaba.fastjson2.JSON;
+import com.zst.mq.broker.core.exception.BrokerException;
+import com.zst.mq.broker.core.frame.FetchOffsetResponseFrame;
+import com.zst.mq.broker.core.frame.PublishAckFrame;
+import com.zst.mq.broker.core.frame.PublishMessageFrame;
 import com.zst.mq.broker.core.frame.SubscribeRequestFrame;
 import com.zst.mq.broker.utils.StringUtils;
+
+import java.util.Map;
 
 public class ActionHandler {
     private Broker broker;
@@ -18,13 +25,15 @@ public class ActionHandler {
             case ActionType.HEARTBEAT:
                 return handleHeartbeat(frame);
             case ActionType.SUBSCRIBE_QUEUE:
+                handleSubscribeQueue(frame);
                 break;
             case ActionType.UNSUBSCRIBE_QUEUE:
                 break;
             case ActionType.PUBLISH_MESSAGE:
-                break;
+                return handlePublishMessage(frame);
+            case ActionType.FETCH_CONSUMPTION_OFFSET:
+                return handleFetchConsumptionOffset(frame);
             case ActionType.FETCH_MESSAGE:
-                break;
             case ActionType.SUBMIT_OFFSET:
                 break;
         }
@@ -32,6 +41,11 @@ public class ActionHandler {
         return null;
     }
 
+    /**
+     * 处理心跳请求
+     * @param frame
+     * @return
+     */
     private ActionFrame handleHeartbeat(ActionFrame frame) {
         String consumerId = frame.getConsumerId();
         if (StringUtils.isNotEmpty(consumerId)) {
@@ -42,11 +56,65 @@ public class ActionHandler {
         return CommonReply.REQUEST_ERROR;
     }
 
+    /**
+     * 订阅队列
+     * @param frame
+     * @return
+     */
     private ActionFrame handleSubscribeQueue(ActionFrame frame) {
         String consumerId = frame.getConsumerId();
         SubscribeRequestFrame request = SubscribeRequestFrame.fromActionFrame(frame);
 
-        Subscription subscription = broker.createSubscription(consumerId, request.getQueueName());
-        // TODO 构建返回结果
+        broker.addSubscription(consumerId, request.getQueueName());
+        return CommonReply.OK;
+    }
+
+    /**
+     * 处理消费offset进度查询请求
+     * @param frame
+     * @return
+     */
+    private ActionFrame handleFetchConsumptionOffset(ActionFrame frame) {
+        String consumerId = frame.getConsumerId();
+        Map<String, Long> queueOffsetMap = broker.queryConsumerSubscriptionOffsets(consumerId);
+
+        FetchOffsetResponseFrame response = new FetchOffsetResponseFrame(queueOffsetMap);
+
+        ActionFrame result = new ActionFrame();
+        result.setAction(ActionType.FETCH_CONSUMPTION_OFFSET_RESPONSE);
+        result.setContent(JSON.toJSONString(response));
+        return result;
+    }
+
+    /**
+     * 发布消息
+     * @param frame
+     * @return
+     */
+    private ActionFrame handlePublishMessage(ActionFrame frame) {
+        PublishMessageFrame publishMessageFrame = PublishMessageFrame.fromActionFrame(frame);
+
+        if (publishMessageFrame.getMessage() == null) {
+            return CommonReply.REQUEST_ERROR;
+        }
+
+        PublishAckFrame publishAckFrame = new PublishAckFrame();
+        publishAckFrame.setMessageId(publishMessageFrame.getMessage().getMessageId());
+
+        try {
+            broker.publishMessages(publishMessageFrame.getMessage());
+            publishAckFrame.setSuccess(true);
+        } catch (BrokerException e) {
+            publishAckFrame.setCause(e.getMessage());
+            publishAckFrame.setSuccess(false);
+        } catch (Exception e) {
+            publishAckFrame.setCause("未知错误");
+            publishAckFrame.setSuccess(false);
+        }
+
+        ActionFrame result = new ActionFrame();
+        result.setAction(ActionType.PUBLISH_ACK);
+        result.setContent(JSON.toJSONString(publishAckFrame));
+        return result;
     }
 }

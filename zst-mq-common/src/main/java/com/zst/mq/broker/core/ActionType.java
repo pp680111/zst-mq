@@ -19,9 +19,13 @@ public interface ActionType {
      */
     int PUBLISH_MESSAGE = 3;
     /**
-     * 拉取消息
+     * 获取消息
      */
-    int FETCH_MESSAGE = 5;
+    int FETCH_MESSAGE = 4;
+    /**
+     * 拉取消费者自己的消费偏移量
+     */
+    int FETCH_CONSUMPTION_OFFSET = 5;
     /**
      * 提交消费偏移量
      */
@@ -36,6 +40,7 @@ public interface ActionType {
      * 操作执行成功
      */
     int OK = 102;
+    int FETCH_CONSUMPTION_OFFSET_RESPONSE = 103;
 
 
     // SERVER ERROR
