@@ -14,6 +14,11 @@ public interface ErrorCode {
      */
     int DUPLICATE_SUBSCRIBE = 10003;
 
+    /**
+     * 消费者未订阅队列
+     */
+    int CONSUMER_NOT_SUBSCRIBE = 10004;
+
     default String getErrorCodeDesc(int errCode) {
         switch (errCode) {
             case CONSUMER_NOT_EXIST:
@@ -22,6 +27,8 @@ public interface ErrorCode {
                 return "队列不存在";
             case DUPLICATE_SUBSCRIBE:
                 return "消费者重复订阅";
+            case CONSUMER_NOT_SUBSCRIBE:
+                return "消费者未订阅队列";
             default:
                 return "未知错误";
         }

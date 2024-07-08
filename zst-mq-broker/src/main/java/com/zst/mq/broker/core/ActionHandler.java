@@ -2,7 +2,13 @@ package com.zst.mq.broker.core;
 
 import com.alibaba.fastjson2.JSON;
 import com.zst.mq.broker.core.exception.BrokerException;
-import com.zst.mq.broker.core.frame.*;
+import com.zst.mq.broker.core.frame.FetchMessageRequestFrame;
+import com.zst.mq.broker.core.frame.FetchMessageResponseFrame;
+import com.zst.mq.broker.core.frame.FetchOffsetResponseFrame;
+import com.zst.mq.broker.core.frame.OffsetCommitRequestFrame;
+import com.zst.mq.broker.core.frame.PublishAckFrame;
+import com.zst.mq.broker.core.frame.PublishMessageFrame;
+import com.zst.mq.broker.core.frame.SubscribeRequestFrame;
 import com.zst.mq.broker.utils.StringUtils;
 
 import java.util.List;
@@ -34,7 +40,9 @@ public class ActionHandler {
             case ActionType.FETCH_MESSAGE:
                 return handleFetchMessage(frame);
             case ActionType.SUBMIT_OFFSET:
-                break;
+                return handleSubmitOffset(frame);
+            default:
+                return CommonReply.UNKNOWN_ACTION;
         }
 
         return null;
@@ -136,5 +144,23 @@ public class ActionHandler {
         result.setAction(ActionType.FETCH_MESSAGE_RESPONSE);
         result.setContent(JSON.toJSONString(responseFrame));
         return result;
+    }
+
+    /**
+     * 处理提交offset请求
+     * @param frame
+     * @return
+     */
+    private ActionFrame handleSubmitOffset(ActionFrame frame) {
+        OffsetCommitRequestFrame requestFrame = OffsetCommitRequestFrame.fromActionFrame(frame);
+
+        if (StringUtils.isEmpty(requestFrame.getQueueName()) || requestFrame.getOffset() == null
+                || StringUtils.isEmpty(frame.getConsumerId())) {
+            return CommonReply.REQUEST_ERROR;
+        }
+
+        broker.commitOffset(frame.getConsumerId(), requestFrame.getQueueName(), requestFrame.getOffset());
+
+        return CommonReply.OK;
     }
 }

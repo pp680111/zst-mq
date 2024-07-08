@@ -60,4 +60,8 @@ public interface ActionType {
      * 请求数据错误
      */
     int REQUEST_ERROR = 202;
+    /**
+     * 未知操作
+     */
+    int UNKNOWN_ACTION = 203;
 }

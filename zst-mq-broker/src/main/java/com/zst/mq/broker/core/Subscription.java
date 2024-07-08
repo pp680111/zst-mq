@@ -27,7 +27,7 @@ public class Subscription {
             throw new IllegalArgumentException();
         }
 
-        if (queueName.contains(queueName)) {
+        if (queueMap.contains(queueName)) {
             throw new BrokerException(ErrorCode.DUPLICATE_SUBSCRIBE);
         }
 
@@ -45,5 +45,22 @@ public class Subscription {
      */
     public Map<String, Long> getQueueOffsets() {
         return offsetMap;
+    }
+
+    /**
+     * 更新对指定queue的消费偏移量
+     * @param queueName
+     * @param offset
+     */
+    public void updateQueueOffset(String queueName, Long offset) {
+        if (StringUtils.isEmpty(queueName) || offset == null) {
+            throw new IllegalArgumentException();
+        }
+
+        if (!queueMap.contains(queueName)) {
+            throw new BrokerException(ErrorCode.CONSUMER_NOT_SUBSCRIBE);
+        }
+
+        offsetMap.put(queueName, offset);
     }
 }

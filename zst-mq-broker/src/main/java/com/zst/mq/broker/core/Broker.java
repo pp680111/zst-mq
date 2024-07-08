@@ -128,6 +128,25 @@ public class Broker {
         return queue.fetchMessage(beginOffset, maxBatch);
     }
 
+    /**
+     * 提交偏移量
+     * @param consumerId
+     * @param queueName
+     * @param offset
+     */
+    public void commitOffset(String consumerId, String queueName, long offset) {
+        Subscription subscription = subscriptions.get(consumerId);
+        if (subscription == null) {
+            throw new BrokerException(ErrorCode.CONSUMER_NOT_EXIST);
+        }
+
+        if (!subscription.checkQueueSubscription(queueName)) {
+            throw new BrokerException(ErrorCode.CONSUMER_NOT_SUBSCRIBE);
+        }
+
+        subscription.updateQueueOffset(queueName, offset);
+    }
+
     private Consumer createConsumer(String consumerId) {
         Consumer consumer = new Consumer();
         consumer.setConsumerId(consumerId);
