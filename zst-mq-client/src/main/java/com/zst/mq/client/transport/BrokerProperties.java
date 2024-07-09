@@ -1,4 +1,4 @@
-package com.zst.mq.client;
+package com.zst.mq.client.transport;
 
 import lombok.Getter;
 import lombok.Setter;

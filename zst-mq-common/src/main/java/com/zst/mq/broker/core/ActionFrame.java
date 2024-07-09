@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Getter
@@ -16,6 +17,11 @@ public class ActionFrame {
     private Map<String, String> properties;
     private String content;
 
+    public ActionFrame(int action) {
+        this.action = action;
+        this.properties = new HashMap<>();
+    }
+
     /**
      * 获取消费者id
      * @return
@@ -26,5 +32,15 @@ public class ActionFrame {
         }
 
         return null;
+    }
+
+    /**
+     * 设置消费者id
+     * @param consumerId
+     */
+    public void setConsumerId(String consumerId) {
+        if (properties != null) {
+            properties.put("consumerId", consumerId);
+        }
     }
 }

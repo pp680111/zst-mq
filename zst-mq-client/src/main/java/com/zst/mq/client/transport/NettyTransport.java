@@ -1,9 +1,11 @@
-package com.zst.mq.client;
+package com.zst.mq.client.transport;
 
 import com.zst.mq.broker.transport.FrameDecoder;
 import com.zst.mq.broker.transport.FrameEncoder;
+import com.zst.mq.broker.transport.TransportFrame;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -44,6 +46,17 @@ public class NettyTransport {
         if (eventLoopGroup != null && !eventLoopGroup.isShutdown()) {
             eventLoopGroup.shutdownGracefully();
             eventLoopGroup = null;
+        }
+    }
+
+    public void send(TransportFrame frame, boolean sync) {
+        if (channel == null) {
+            throw new RuntimeException("client not init yet");
+        }
+
+        ChannelFuture future = channel.write(frame);
+        if (sync) {
+            future.syncUninterruptibly();
         }
     }
 
