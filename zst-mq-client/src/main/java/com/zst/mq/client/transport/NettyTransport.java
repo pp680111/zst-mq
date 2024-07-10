@@ -18,6 +18,7 @@ public class NettyTransport {
     private EventLoopGroup eventLoopGroup;
     private Channel channel;
     private BrokerProperties brokerProperties;
+    private ResponseFutureHolder responseFutureHolder;
 
     public void start() {
         eventLoopGroup = new NioEventLoopGroup(Runtime.getRuntime().availableProcessors());
@@ -49,24 +50,36 @@ public class NettyTransport {
         }
     }
 
-    public void send(TransportFrame frame, boolean sync) {
+    public ResponseFutureHolder.ResponseFuture send(TransportFrame frame, boolean sync, boolean requireResponseFuture) {
         if (channel == null) {
             throw new RuntimeException("client not init yet");
         }
 
-        ChannelFuture future = channel.write(frame);
-        if (sync) {
-            future.syncUninterruptibly();
+        ResponseFutureHolder.ResponseFuture responseFuture = null;
+        try {
+            if (requireResponseFuture) {
+                responseFuture = responseFutureHolder.register(frame);
+            }
+
+            ChannelFuture future = channel.write(frame);
+            if (sync) {
+                future.syncUninterruptibly();
+            }
+        } catch (Exception e) {
+            responseFutureHolder.cancelFuture(frame.getSeqNo());
+            log.error(e.getMessage(), e);
         }
+
+        return responseFuture;
     }
 
-    private class Initializer extends ChannelInitializer {
+    private class Initializer extends ChannelInitializer<NioSocketChannel> {
         @Override
-        protected void initChannel(Channel channel) throws Exception {
+        protected void initChannel(NioSocketChannel ch) throws Exception {
             channel.pipeline()
                     .addLast(new FrameDecoder())
                     .addLast(new FrameEncoder())
-                    .addLast(new BrokerResponseHandler());
+                    .addLast(new BrokerResponseHandler(responseFutureHolder));
         }
     }
 }

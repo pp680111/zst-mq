@@ -9,7 +9,7 @@ public class TransportFrame {
     /**
      * 传输帧的序列号
      */
-    long seqNo;
+    Long seqNo;
     /**
      * 传输帧的内容
      */

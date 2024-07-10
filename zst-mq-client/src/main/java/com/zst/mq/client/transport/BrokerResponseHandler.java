@@ -11,11 +11,11 @@ import lombok.AllArgsConstructor;
  */
 @AllArgsConstructor
 public class BrokerResponseHandler extends ChannelInboundHandlerAdapter {
-    private MQClient mqClient;
+    private ResponseFutureHolder responseFutureHolder;
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         TransportFrame transportFrame = (TransportFrame) msg;
-        mqClient.handleTransportResponse(transportFrame);
+        responseFutureHolder.completeFuture(transportFrame);
     }
 }
