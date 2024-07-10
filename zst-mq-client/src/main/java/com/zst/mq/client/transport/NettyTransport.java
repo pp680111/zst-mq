@@ -60,12 +60,13 @@ public class NettyTransport {
         }
     }
 
-    private static class Initializer extends ChannelInitializer {
+    private class Initializer extends ChannelInitializer {
         @Override
         protected void initChannel(Channel channel) throws Exception {
             channel.pipeline()
                     .addLast(new FrameDecoder())
-                    .addLast(new FrameEncoder());
+                    .addLast(new FrameEncoder())
+                    .addLast(new BrokerResponseHandler());
         }
     }
 }

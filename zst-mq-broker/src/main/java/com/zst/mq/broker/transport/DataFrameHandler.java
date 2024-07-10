@@ -19,6 +19,7 @@ public class DataFrameHandler extends ChannelInboundHandlerAdapter {
             ActionFrame response = actionHandler.dispatch(actionFrame);
             TransportFrame responseTransportFrame = new TransportFrame();
             responseTransportFrame.setActionFrameContent(JSON.toJSONString(response));
+            responseTransportFrame.setSeqNo(frame.getSeqNo());
             ctx.writeAndFlush(responseTransportFrame);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
