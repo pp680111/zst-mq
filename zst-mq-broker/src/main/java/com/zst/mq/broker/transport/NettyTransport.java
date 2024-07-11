@@ -10,6 +10,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -41,6 +43,7 @@ public class NettyTransport {
                     .childOption(EpollChannelOption.SO_REUSEPORT, true)
                     .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .channel(NioServerSocketChannel.class)
+                    .handler(new LoggingHandler(LogLevel.DEBUG))
                     .childHandler(new Initializer());
 
             channel = serverBootstrap.bind(properties.getPort()).channel();

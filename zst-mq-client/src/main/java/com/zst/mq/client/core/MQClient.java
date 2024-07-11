@@ -3,7 +3,6 @@ package com.zst.mq.client.core;
 import com.alibaba.fastjson2.JSON;
 import com.zst.mq.broker.core.ActionFrame;
 import com.zst.mq.broker.core.ActionType;
-import com.zst.mq.broker.core.Message;
 import com.zst.mq.broker.core.frame.SubscribeRequestFrame;
 import com.zst.mq.broker.transport.TransportFrame;
 import com.zst.mq.broker.utils.StringUtils;
@@ -11,7 +10,6 @@ import com.zst.mq.client.transport.NettyTransport;
 import com.zst.mq.client.transport.ResponseFuture;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -22,10 +20,14 @@ public class MQClient {
     private NettyTransport transport;
     private ScheduledExecutorService executor;
 
+    public MQClient() {
+    }
+
     public MQClient(ClientProperties clientProperties, NettyTransport transport) {
         this.transport = transport;
         this.clientProperties = clientProperties;
         executor = Executors.newSingleThreadScheduledExecutor();
+        init();
     }
 
     /**
@@ -76,7 +78,7 @@ public class MQClient {
         frame.setConsumerId(clientProperties.getConsumerId());
 
         TransportFrame transportFrame = wrapTransportFrame(frame);
-        transport.send(transportFrame, false, false);
+        transport.send(transportFrame, true, false);
     }
 
     private TransportFrame wrapTransportFrame(ActionFrame frame) {

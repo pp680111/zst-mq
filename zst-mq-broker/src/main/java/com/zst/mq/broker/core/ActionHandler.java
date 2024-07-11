@@ -10,10 +10,13 @@ import com.zst.mq.broker.core.frame.PublishAckFrame;
 import com.zst.mq.broker.core.frame.PublishMessageFrame;
 import com.zst.mq.broker.core.frame.SubscribeRequestFrame;
 import com.zst.mq.broker.utils.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 public class ActionHandler {
     private Broker broker;
 
@@ -56,6 +59,8 @@ public class ActionHandler {
     private ActionFrame handleHeartbeat(ActionFrame frame) {
         String consumerId = frame.getConsumerId();
         if (StringUtils.isNotEmpty(consumerId)) {
+            log.debug(MessageFormat.format("received consumer {0} heartbeat request", consumerId));
+
             broker.updateConsumerHeartbeat(consumerId);
             return CommonReply.OK;
         }

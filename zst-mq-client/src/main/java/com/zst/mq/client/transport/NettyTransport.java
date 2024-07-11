@@ -41,7 +41,7 @@ public class NettyTransport {
             channel.closeFuture().addListener(future -> {
                 stop();
             });
-            
+
             log.info("netty client connection start");
         } catch (Exception e) {
             log.info("netty client connect failed", e);
@@ -66,12 +66,14 @@ public class NettyTransport {
                 responseFuture = responseFutureHolder.register(frame);
             }
 
-            ChannelFuture future = channel.write(frame);
+            ChannelFuture future = channel.writeAndFlush(frame);
             if (sync) {
                 future.syncUninterruptibly();
             }
         } catch (Exception e) {
-            responseFutureHolder.cancelFuture(frame.getSeqNo());
+            if (responseFuture != null) {
+                responseFutureHolder.cancelFuture(frame.getSeqNo());
+            }
             log.error(e.getMessage(), e);
         }
 
