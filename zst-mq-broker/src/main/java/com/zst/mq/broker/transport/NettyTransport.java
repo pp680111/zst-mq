@@ -1,5 +1,6 @@
 package com.zst.mq.broker.transport;
 
+import com.zst.mq.broker.core.ActionHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
@@ -14,12 +15,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class NettyTransport {
     private NettyTransportProperties properties;
+    private ActionHandler actionHandler;
     private EventLoopGroup ioEventLoopGroup;
     private EventLoopGroup bizEventLoopGroup;
     private Channel channel;
+
+    public NettyTransport(NettyTransportProperties properties, ActionHandler actionHandler) {
+        this.properties = properties;
+        this.actionHandler = actionHandler;
+    }
+
     public void start() {
-        ioEventLoopGroup = new NioEventLoopGroup(properties.getIoWorker());
-        bizEventLoopGroup = new NioEventLoopGroup(properties.getBizWorker());
+        ioEventLoopGroup = new NioEventLoopGroup(properties.getIoWorkerNum());
+        bizEventLoopGroup = new NioEventLoopGroup(properties.getBizWorkerNum());
 
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap()
@@ -46,7 +54,7 @@ public class NettyTransport {
         }
     }
 
-    private void stop() {
+    public void stop() {
         if (bizEventLoopGroup != null && !bizEventLoopGroup.isShutdown()) {
             bizEventLoopGroup.shutdownGracefully();
             bizEventLoopGroup = null;
@@ -60,12 +68,15 @@ public class NettyTransport {
         channel.close();
     }
 
-    private static class Initializer extends ChannelInitializer {
+    private class Initializer extends ChannelInitializer {
         @Override
         protected void initChannel(Channel channel) throws Exception {
+            log.info("initialize inbound channel, " + channel.remoteAddress().toString());
+
             channel.pipeline()
                     .addLast(new FrameDecoder())
-                    .addLast(new FrameEncoder());
+                    .addLast(new FrameEncoder())
+                    .addLast(new DataFrameHandler(actionHandler));
         }
     }
 }

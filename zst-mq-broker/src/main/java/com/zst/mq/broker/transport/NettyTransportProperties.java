@@ -9,7 +9,16 @@ import lombok.Setter;
 @Getter
 @Setter
 public class NettyTransportProperties {
+    /**
+     * 服务端口
+     */
     private int port = 6464;
-    private int ioWorker = 1;
-    private int bizWorker = Runtime.getRuntime().availableProcessors();
+    /**
+     * io线程数量
+     */
+    private int ioWorkerNum = 1;
+    /**
+     * 业务线程数量
+     */
+    private int bizWorkerNum = Runtime.getRuntime().availableProcessors();
 }

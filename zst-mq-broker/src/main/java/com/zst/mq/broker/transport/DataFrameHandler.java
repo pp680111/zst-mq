@@ -5,9 +5,11 @@ import com.zst.mq.broker.core.ActionFrame;
 import com.zst.mq.broker.core.ActionHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@AllArgsConstructor
 public class DataFrameHandler extends ChannelInboundHandlerAdapter {
     private ActionHandler actionHandler;
 
