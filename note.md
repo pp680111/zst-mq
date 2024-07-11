@@ -5,6 +5,7 @@ TODO:
 * 优化消息在内存的对接方式，提供无限堆积的能力（直到内存炸了）
 * 实现消息的持久化
 * queue中消息的定期处理，防止内存占用过多
+* 完善client和broker的异常处理
 
 
 consumer和queue的订阅关系可以抽象为Subscription类，在里面记录QueueId或topicId、consumerId和offset，offset也能用来区分不同consumer的

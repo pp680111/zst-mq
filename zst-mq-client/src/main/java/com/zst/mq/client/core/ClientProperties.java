@@ -17,4 +17,8 @@ public class ClientProperties {
      * 消费者ID
      */
     private String consumerId = UUID.randomUUID().toString().replaceAll("-", "");
+    /**
+     * 等待Broker响应的超时时间
+     */
+    private long responseTimeoutMs = 10 * 1000L;
 }

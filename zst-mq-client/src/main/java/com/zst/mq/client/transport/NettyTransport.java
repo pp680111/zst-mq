@@ -20,6 +20,11 @@ public class NettyTransport {
     private BrokerProperties brokerProperties;
     private ResponseFutureHolder responseFutureHolder;
 
+    public NettyTransport(BrokerProperties brokerProperties) {
+        this.brokerProperties = brokerProperties;
+        responseFutureHolder = new ResponseFutureHolder();
+    }
+
     public void start() {
         eventLoopGroup = new NioEventLoopGroup(Runtime.getRuntime().availableProcessors());
 
@@ -36,7 +41,7 @@ public class NettyTransport {
             channel.closeFuture().addListener(future -> {
                 stop();
             });
-
+            
             log.info("netty client connection start");
         } catch (Exception e) {
             log.info("netty client connect failed", e);
@@ -50,12 +55,12 @@ public class NettyTransport {
         }
     }
 
-    public ResponseFutureHolder.ResponseFuture send(TransportFrame frame, boolean sync, boolean requireResponseFuture) {
+    public ResponseFuture send(TransportFrame frame, boolean sync, boolean requireResponseFuture) {
         if (channel == null) {
             throw new RuntimeException("client not init yet");
         }
 
-        ResponseFutureHolder.ResponseFuture responseFuture = null;
+       ResponseFuture responseFuture = null;
         try {
             if (requireResponseFuture) {
                 responseFuture = responseFutureHolder.register(frame);

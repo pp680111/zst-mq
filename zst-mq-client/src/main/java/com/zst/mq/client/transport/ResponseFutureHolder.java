@@ -3,7 +3,6 @@ package com.zst.mq.client.transport;
 import com.zst.mq.broker.transport.TransportFrame;
 import com.zst.mq.broker.utils.NamedThreadFactory;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -76,12 +75,5 @@ public class ResponseFutureHolder {
         // TODO 初始化一个任务，用来清除超时的暂存future
     }
 
-    public static class ResponseFuture extends CompletableFuture<TransportFrame> {
-        private long seqNo;
-        private long startTime;
 
-        public ResponseFuture() {
-            this.startTime = System.currentTimeMillis();
-        }
-    }
 }
