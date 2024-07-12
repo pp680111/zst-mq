@@ -50,8 +50,11 @@ public class ResponseFutureHolder {
      * @param frame
      */
     public void completeFuture(TransportFrame frame) {
-        if (frame == null || frame.getSeqNo() == null) {
+        if (frame == null) {
             throw new IllegalArgumentException();
+        }
+        if (frame.getSeqNo() == null) {
+            return;
         }
 
         ResponseFuture future = futures.get(frame.getSeqNo());

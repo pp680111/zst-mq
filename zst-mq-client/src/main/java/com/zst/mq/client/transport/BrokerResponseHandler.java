@@ -16,6 +16,7 @@ public class BrokerResponseHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         TransportFrame transportFrame = (TransportFrame) msg;
+        // TODO 如果响应结果不是OK的花，那么要进行报错
         responseFutureHolder.completeFuture(transportFrame);
     }
 }
