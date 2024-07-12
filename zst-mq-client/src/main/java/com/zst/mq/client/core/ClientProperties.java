@@ -12,7 +12,7 @@ public class ClientProperties {
     /**
      * 心跳包间隔
      */
-    private long heartbeatIntervalMs = 1000;
+    private long heartbeatIntervalMs = 5 * 1000;
     /**
      * 消费者ID
      */
