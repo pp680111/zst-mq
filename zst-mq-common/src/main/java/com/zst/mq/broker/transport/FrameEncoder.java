@@ -20,7 +20,7 @@ public class FrameEncoder extends MessageToByteEncoder<TransportFrame> {
         }
 
         String jsonContent = JSON.toJSONString(msg);
-        String hexEncodedContent = HexUtils.toHexString(jsonContent);
+        String hexEncodedContent = HexUtils.toHexString(jsonContent) + "\r\n";
         out.writeBytes(hexEncodedContent.getBytes(StandardCharsets.UTF_8));
     }
 }
