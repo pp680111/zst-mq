@@ -45,7 +45,7 @@ public class Broker {
      */
     public void updateConsumerHeartbeat(String consumerId) {
         Consumer consumer = consumerMap.get(consumerId);
-        if (consumer != null) {
+        if (consumer == null) {
             consumer = createConsumer(consumerId);
             consumerMap.put(consumerId, consumer);
         }

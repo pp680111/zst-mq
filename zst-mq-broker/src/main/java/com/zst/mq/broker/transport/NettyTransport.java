@@ -46,7 +46,7 @@ public class NettyTransport {
                     .handler(new LoggingHandler(LogLevel.DEBUG))
                     .childHandler(new Initializer());
 
-            channel = serverBootstrap.bind(properties.getPort()).channel();
+            channel = serverBootstrap.bind(properties.getPort()).sync().channel();
             channel.closeFuture().addListener(future -> {
                 stop();
             });
