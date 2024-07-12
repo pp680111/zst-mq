@@ -33,10 +33,20 @@ public class NettyTransport {
                     .group(eventLoopGroup)
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .channel(NioSocketChannel.class)
-                    .handler(new Initializer());
+                    .handler(new ChannelInitializer<NioSocketChannel>() {
+                        @Override
+                        protected void initChannel(NioSocketChannel channel) throws Exception {
+                            channel.pipeline()
+                                    .addLast(new FrameDecoder())
+                                    .addLast(new FrameEncoder())
+                                    .addLast(new BrokerResponseHandler(responseFutureHolder));
+                        }
+                    });
 
-            channel = bootstrap.connect(brokerProperties.getHost(),
-                    brokerProperties.getPort()).channel();
+            channel = bootstrap
+                    .connect(brokerProperties.getHost(), brokerProperties.getPort())
+                    .sync()
+                    .channel();
 
             channel.closeFuture().addListener(future -> {
                 stop();
@@ -48,19 +58,12 @@ public class NettyTransport {
         }
     }
 
-    public void stop() {
-        if (eventLoopGroup != null && !eventLoopGroup.isShutdown()) {
-            eventLoopGroup.shutdownGracefully();
-            eventLoopGroup = null;
-        }
-    }
-
     public ResponseFuture send(TransportFrame frame, boolean sync, boolean requireResponseFuture) {
         if (channel == null) {
             throw new RuntimeException("client not init yet");
         }
 
-       ResponseFuture responseFuture = null;
+        ResponseFuture responseFuture = null;
         try {
             if (requireResponseFuture) {
                 responseFuture = responseFutureHolder.register(frame);
@@ -80,13 +83,10 @@ public class NettyTransport {
         return responseFuture;
     }
 
-    private class Initializer extends ChannelInitializer<NioSocketChannel> {
-        @Override
-        protected void initChannel(NioSocketChannel ch) throws Exception {
-            channel.pipeline()
-                    .addLast(new FrameDecoder())
-                    .addLast(new FrameEncoder())
-                    .addLast(new BrokerResponseHandler(responseFutureHolder));
+    public void stop() {
+        if (eventLoopGroup != null && !eventLoopGroup.isShutdown()) {
+            eventLoopGroup.shutdownGracefully();
+            eventLoopGroup = null;
         }
     }
 }
