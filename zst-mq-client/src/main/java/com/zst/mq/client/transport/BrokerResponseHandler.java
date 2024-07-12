@@ -5,10 +5,12 @@ import com.zst.mq.client.core.MQClient;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 处理Broker响应的Handler
  */
+@Slf4j
 @AllArgsConstructor
 public class BrokerResponseHandler extends ChannelInboundHandlerAdapter {
     private ResponseFutureHolder responseFutureHolder;
@@ -16,7 +18,10 @@ public class BrokerResponseHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         TransportFrame transportFrame = (TransportFrame) msg;
-        // TODO 如果响应结果不是OK的花，那么要进行报错
-        responseFutureHolder.completeFuture(transportFrame);
+        try {
+            responseFutureHolder.completeFuture(transportFrame);
+        } catch (Exception e) {
+            log.error("处理Broker端响应时发生错误");
+        }
     }
 }
