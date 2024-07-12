@@ -83,7 +83,7 @@ public class MQClient {
 
     private TransportFrame wrapTransportFrame(ActionFrame frame) {
         TransportFrame transportFrame = new TransportFrame();
-        transportFrame.setActionFrameContent(frame.getContent());
+        transportFrame.setActionFrameContent(JSON.toJSONString(frame));
         return transportFrame;
     }
 
