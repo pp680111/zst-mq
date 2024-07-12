@@ -1,12 +1,20 @@
 package com.zst.mq.broker.core;
 
 import com.zst.mq.broker.core.exception.BrokerException;
+import com.zst.mq.broker.utils.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 public class Broker {
+    // 在订阅或发布的队列不存在时，是否自动创建
+    // 此配置因debug开启，后面需关闭
+    private boolean createNotExistQueue = true;
+
     /**
      * key=queueName, value=Queue对象的Map
      */
@@ -54,20 +62,45 @@ public class Broker {
     }
 
     /**
+     * 创建队列
+     * @param queueName
+     */
+    public void createQueue(String queueName) {
+        if (StringUtils.isEmpty(queueName)) {
+            throw new IllegalArgumentException();
+        }
+
+        Queue queue = queueMap.get(queueName);
+        if (queue != null) {
+            throw new BrokerException(ErrorCode.QUEUE_ALREADY_EXIST);
+        }
+
+        log.debug("create queue {}", queueName);
+
+        queue = new Queue(queueName);
+        queueMap.put(queueName, queue);
+    }
+
+    /**
      * 创建新的订阅关系
      * @param consumerId
      * @param queueName
      * @return
      */
     public Subscription addSubscription(String consumerId, String queueName) {
-        Queue queue = queueMap.get(queueName);
-        if (queue == null) {
-            throw new BrokerException(ErrorCode.QUEUE_NOT_EXIST);
-        }
-
         Consumer consumer = consumerMap.get(consumerId);
         if (consumer == null) {
             throw new BrokerException(ErrorCode.CONSUMER_NOT_EXIST);
+        }
+
+        Queue queue = queueMap.get(queueName);
+        if (queue == null) {
+            if (createNotExistQueue) {
+                createQueue(queueName);
+                queue = queueMap.get(queueName);
+            } else {
+                throw new BrokerException(ErrorCode.QUEUE_NOT_EXIST);
+            }
         }
 
         Subscription subscription = subscriptions.get(consumerId);
@@ -75,6 +108,9 @@ public class Broker {
             subscription = new Subscription();
             subscription.setConsumerId(consumerId);
             subscriptions.put(consumerId, subscription);
+
+            log.debug(MessageFormat.format("create subscription from consumer {0} to {1}, initial offset = {2}",
+                    consumerId, queueName, queue.currentOffset()));
         }
 
         subscription.addQueueSubscribe(queueName, queue.currentOffset());

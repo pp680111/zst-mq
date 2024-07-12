@@ -8,6 +8,7 @@
 
     <logger name="com.zst.mq.broker.core.ActionHandler" level="debug"></logger>
     <logger name="com.zst.mq.broker.transport.NettyTransport" level="debug"></logger>
+    <logger name="com.zst.mq.broker.core.Broker" level="debug"></logger>
 
     <root level="info">
         <appender-ref ref="STDOUT" />

@@ -14,7 +14,7 @@ import java.util.Map;
 @Setter
 public class Subscription {
     private String consumerId;
-    private List<String> queueMap = new ArrayList<>();
+    private List<String> queues = new ArrayList<>();
     private Map<String, Long> offsetMap = new HashMap<>();
 
     /**
@@ -27,16 +27,16 @@ public class Subscription {
             throw new IllegalArgumentException();
         }
 
-        if (queueMap.contains(queueName)) {
+        if (queues.contains(queueName)) {
             throw new BrokerException(ErrorCode.DUPLICATE_SUBSCRIBE);
         }
 
-        queueMap.add(queueName);
+        queues.add(queueName);
         offsetMap.put(queueName, initialOffset);
     }
 
     public boolean checkQueueSubscription(String queueName) {
-        return queueMap.contains(queueName);
+        return queues.contains(queueName);
     }
 
     /**
@@ -57,7 +57,7 @@ public class Subscription {
             throw new IllegalArgumentException();
         }
 
-        if (!queueMap.contains(queueName)) {
+        if (!queues.contains(queueName)) {
             throw new BrokerException(ErrorCode.CONSUMER_NOT_SUBSCRIBE);
         }
 

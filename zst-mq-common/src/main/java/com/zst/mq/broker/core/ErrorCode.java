@@ -19,6 +19,11 @@ public interface ErrorCode {
      */
     int CONSUMER_NOT_SUBSCRIBE = 10004;
 
+    /**
+     * 队列已存在
+     */
+    int QUEUE_ALREADY_EXIST = 10005;
+
     default String getErrorCodeDesc(int errCode) {
         switch (errCode) {
             case CONSUMER_NOT_EXIST:
@@ -29,6 +34,8 @@ public interface ErrorCode {
                 return "消费者重复订阅";
             case CONSUMER_NOT_SUBSCRIBE:
                 return "消费者未订阅队列";
+            case QUEUE_ALREADY_EXIST:
+                return "队列已存在";
             default:
                 return "未知错误";
         }

@@ -15,7 +15,8 @@ public class Queue {
     private Deque<QueueMessage> queue;
     private String name;
 
-    public Queue() {
+    public Queue(String name) {
+        this.name = name;
         queue = new LinkedList<>();
     }
 
