@@ -3,6 +3,7 @@ package com.zst.mq.client.core;
 import com.alibaba.fastjson2.JSON;
 import com.zst.mq.broker.core.ActionFrame;
 import com.zst.mq.broker.core.ActionType;
+import com.zst.mq.broker.core.frame.FetchOffsetResponseFrame;
 import com.zst.mq.broker.core.frame.SubscribeRequestFrame;
 import com.zst.mq.broker.transport.TransportFrame;
 import com.zst.mq.broker.utils.StringUtils;
@@ -10,6 +11,7 @@ import com.zst.mq.client.transport.NettyTransport;
 import com.zst.mq.client.transport.ResponseFuture;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -62,6 +64,34 @@ public class MQClient {
         }
     }
 
+    /**
+     * 查询消费者的消费进度
+     * @param consumerId
+     * @return
+     */
+    public Map<String, Long> fetchOffset() {
+        ActionFrame actionFrame = createActionFrame(ActionType.FETCH_CONSUMPTION_OFFSET, clientProperties.getConsumerId(),
+                null, null);
+        TransportFrame transportFrame = wrapTransportFrame(actionFrame);
+
+        try {
+            ResponseFuture future = transport.send(transportFrame, true, true);
+            TransportFrame response = future.get(clientProperties.getResponseTimeoutMs(), TimeUnit.MILLISECONDS);
+            ActionFrame responseActionFrame = unwrapTransportFrame(response);
+
+            if (responseActionFrame.getAction() != ActionType.FETCH_CONSUMPTION_OFFSET_RESPONSE) {
+                // TODO 异常处理待完善
+                throw new RuntimeException("请求失败");
+            }
+
+            FetchOffsetResponseFrame fetchOffsetResponseFrame = JSON.parseObject(responseActionFrame.getContent(),
+                    FetchOffsetResponseFrame.class);
+            return fetchOffsetResponseFrame.getCurrentSubscriptionOffset();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void init() {
         scheduleHeartbeat();
     }
@@ -79,6 +109,17 @@ public class MQClient {
 
         TransportFrame transportFrame = wrapTransportFrame(frame);
         transport.send(transportFrame, true, false);
+    }
+
+    private ActionFrame createActionFrame(int action, String consumerId, Object content,
+                                          Map<String, String> properties) {
+        ActionFrame actionFrame = new ActionFrame(action);
+        actionFrame.setConsumerId(consumerId);
+        if (content != null) {
+            actionFrame.setContent(JSON.toJSONString(content));
+        }
+        actionFrame.addProperties(properties);
+        return actionFrame;
     }
 
     private TransportFrame wrapTransportFrame(ActionFrame frame) {

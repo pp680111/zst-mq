@@ -1,8 +1,6 @@
 package com.zst.mq.broker.core;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.HashMap;
@@ -10,16 +8,13 @@ import java.util.Map;
 
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 public class ActionFrame {
     private int action;
-    private Map<String, String> properties;
+    private Map<String, String> properties = new HashMap<>();
     private String content;
 
     public ActionFrame(int action) {
         this.action = action;
-        this.properties = new HashMap<>();
     }
 
     /**
@@ -42,5 +37,17 @@ public class ActionFrame {
         if (properties != null) {
             properties.put("consumerId", consumerId);
         }
+    }
+
+    /**
+     * 添加属性
+     * @param properties
+     */
+    public void addProperties(Map<String, String> properties) {
+        if (properties == null || properties.isEmpty()) {
+            return;
+        }
+
+        this.properties.putAll(properties);
     }
 }
