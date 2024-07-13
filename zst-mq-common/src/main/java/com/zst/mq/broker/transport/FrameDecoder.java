@@ -21,14 +21,10 @@ public class FrameDecoder extends ByteToMessageDecoder {
      */
     private static final int MAX_LENGTH = 4 * 1024 * 1024;
 
-    private StringBuilder buffer;
+    private StringBuilder buffer = new StringBuilder();
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        if (buffer == null) {
-            buffer = new StringBuilder();
-        }
-
         int readableBytes = in.readableBytes();
         for (int i = 0; i < readableBytes; i++) {
             buffer.append((char) in.readByte());
@@ -49,7 +45,7 @@ public class FrameDecoder extends ByteToMessageDecoder {
 
     private String finishBuffer() {
         String frameRawData = buffer.substring(0, buffer.length() - 2);
-        buffer = null;
+        buffer = new StringBuilder();
         return HexUtils.hex2String(frameRawData);
     }
     
