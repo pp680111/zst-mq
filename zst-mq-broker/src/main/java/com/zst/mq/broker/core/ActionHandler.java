@@ -32,8 +32,7 @@ public class ActionHandler {
             case ActionType.HEARTBEAT:
                 return handleHeartbeat(frame);
             case ActionType.SUBSCRIBE_QUEUE:
-                handleSubscribeQueue(frame);
-                break;
+                return handleSubscribeQueue(frame);
             case ActionType.UNSUBSCRIBE_QUEUE:
                 break;
             case ActionType.PUBLISH_MESSAGE:
