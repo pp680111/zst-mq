@@ -1,5 +1,6 @@
 package com.zst.mq.broker.core;
 
+import com.alibaba.fastjson2.JSON;
 import com.zst.mq.broker.core.exception.BrokerException;
 import com.zst.mq.broker.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -43,8 +44,17 @@ public class Broker {
         return subscriptions.get(consumerId);
     }
 
+    /**
+     * 获取消费者对象
+     * @param consumerId
+     * @return
+     */
     public Consumer getConsumer(String consumerId) {
-        return consumerMap.get(consumerId);
+        if (consumerMap.containsKey(consumerId)) {
+            return consumerMap.get(consumerId);
+        }
+
+        return createConsumer(consumerId);
     }
 
     /**
@@ -123,6 +133,8 @@ public class Broker {
             throw new BrokerException(ErrorCode.CONSUMER_NOT_EXIST);
         }
 
+        log.debug(MessageFormat.format("Consumer {0} fetch offset, result = {1}", consumerId,
+                JSON.toJSONString(subscription.getQueueOffsets())));
         return subscription.getOffsetMap();
     }
 
@@ -139,6 +151,8 @@ public class Broker {
             throw new BrokerException(ErrorCode.QUEUE_NOT_EXIST);
         }
 
+        log.debug(MessageFormat.format("queue {0} add message {1}", message.getQueueName(),
+                JSON.toJSONString(message)));
         queue.addMessage(message);
     }
 
@@ -183,7 +197,18 @@ public class Broker {
         subscription.updateQueueOffset(queueName, offset);
     }
 
-    private Consumer createConsumer(String consumerId) {
+    /**
+     * 创建Consumer对象
+     *
+     * 加个synchronized处理一下并发请求时重复创建的问题
+     * @param consumerId
+     * @return
+     */
+    private synchronized Consumer createConsumer(String consumerId) {
+        if (consumerMap.containsKey(consumerId)) {
+            return consumerMap.get(consumerId);
+        }
+
         Consumer consumer = new Consumer();
         consumer.setConsumerId(consumerId);
         consumer.setLastHeartbeatTime(System.currentTimeMillis());
