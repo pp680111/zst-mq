@@ -70,7 +70,7 @@ public class MQClient {
         executor.scheduleAtFixedRate(() -> {
             sendHeartbeat();
             log.debug("send heartbeat");
-        }, 1000, clientProperties.getHeartbeatIntervalMs(), TimeUnit.MILLISECONDS);
+        }, 0, clientProperties.getHeartbeatIntervalMs(), TimeUnit.MILLISECONDS);
     }
 
     private void sendHeartbeat() {
