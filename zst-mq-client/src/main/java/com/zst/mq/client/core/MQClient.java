@@ -3,7 +3,9 @@ package com.zst.mq.client.core;
 import com.alibaba.fastjson2.JSON;
 import com.zst.mq.broker.core.ActionFrame;
 import com.zst.mq.broker.core.ActionType;
+import com.zst.mq.broker.core.Message;
 import com.zst.mq.broker.core.frame.FetchOffsetResponseFrame;
+import com.zst.mq.broker.core.frame.PublishMessageFrame;
 import com.zst.mq.broker.core.frame.SubscribeRequestFrame;
 import com.zst.mq.broker.transport.TransportFrame;
 import com.zst.mq.broker.utils.StringUtils;
@@ -89,6 +91,38 @@ public class MQClient {
             return fetchOffsetResponseFrame.getCurrentSubscriptionOffset();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 发布消息
+     * @param message
+     * @param requireAck
+     */
+    public void publishMessage(Message message, boolean requireAck) {
+        PublishMessageFrame pmf = new PublishMessageFrame();
+        pmf.setMessage(message);
+
+        ActionFrame actionFrame = createActionFrame(ActionType.PUBLISH_MESSAGE, clientProperties.getConsumerId(),
+                pmf, null);
+        TransportFrame transportFrame = wrapTransportFrame(actionFrame);
+
+        try {
+            ResponseFuture future = transport.send(transportFrame, true, requireAck);
+
+            // 如果不需要回复的话，则确认等待消息已经发送出去之后就可以返回了
+            if (!requireAck) {
+                return;
+            }
+
+            TransportFrame responseFrame = future.get(clientProperties.getResponseTimeoutMs(), TimeUnit.MILLISECONDS);
+            ActionFrame responseActionFrame = unwrapTransportFrame(responseFrame);
+
+            if (responseActionFrame.getAction() != ActionType.PUBLISH_ACK) {
+                throw new RuntimeException();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException();
         }
     }
 

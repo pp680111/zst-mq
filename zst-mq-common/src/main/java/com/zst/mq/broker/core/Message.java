@@ -3,6 +3,7 @@ package com.zst.mq.broker.core;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -11,7 +12,7 @@ import java.util.Map;
 @Getter
 @Setter
 public class Message {
-    private Map<String, String> properties;
+    private Map<String, String> properties = new HashMap<>();
     private String content;
 
     public String getQueueName() {
@@ -22,12 +23,12 @@ public class Message {
         return properties.get("messageId");
     }
 
-    public long getOffset() {
-        String offset = properties.get("offset");
-        if (offset == null) {
-            return -1L;
-        }
-
-        return Long.parseLong(offset);
+    public void setQueueName(String queueName) {
+        this.properties.put("queue", queueName);
     }
+
+    public void setMessageId(String messageId) {
+        this.properties.put("messageId", messageId);
+    }
+
 }

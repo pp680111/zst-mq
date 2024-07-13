@@ -4,8 +4,10 @@ import com.alibaba.fastjson2.JSON;
 import com.zst.mq.broker.core.ActionFrame;
 import com.zst.mq.broker.core.Message;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 public class PublishMessageFrame {
     private Message message;
 
