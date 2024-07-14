@@ -55,7 +55,7 @@ public class Queue {
      * @return
      */
     public List<Message> fetchMessage(long beginOffset, int batchNum) {
-        if (queue.isEmpty() || queue.peek().getOffset() <= beginOffset) {
+        if (queue.isEmpty() || queue.peekLast().getOffset() <= beginOffset) {
             return Collections.emptyList();
         }
 
