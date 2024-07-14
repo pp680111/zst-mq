@@ -11,5 +11,14 @@ TODO:
 * 实现消息的持久化
 * queue中消息的定期处理，防止内存占用过多
 * 完善client和broker的异常处理
+* 使用FileChannel的磁盘内存映射功能来做数据的高性能持久化
 
 
+
+例子
+
+```
+FileChannel fileChannel = (FileChannel) Files.newByteChannel(Paths.get("D:\\test.txt"));
+MappedByteBuffer mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, 1024);
+```
+消息在文件中的位置可以用偏移量表示，再加上消息的大小，就可以知道一份数据的位置和长度
