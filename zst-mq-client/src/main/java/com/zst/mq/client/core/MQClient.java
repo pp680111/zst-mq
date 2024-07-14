@@ -4,14 +4,10 @@ import com.alibaba.fastjson2.JSON;
 import com.zst.mq.broker.core.ActionFrame;
 import com.zst.mq.broker.core.ActionType;
 import com.zst.mq.broker.core.Message;
-import com.zst.mq.broker.core.frame.FetchMessageRequestFrame;
-import com.zst.mq.broker.core.frame.FetchMessageResponseFrame;
-import com.zst.mq.broker.core.frame.FetchOffsetResponseFrame;
-import com.zst.mq.broker.core.frame.OffsetCommitRequestFrame;
-import com.zst.mq.broker.core.frame.PublishMessageFrame;
-import com.zst.mq.broker.core.frame.SubscribeRequestFrame;
+import com.zst.mq.broker.core.frame.*;
 import com.zst.mq.broker.transport.TransportFrame;
 import com.zst.mq.broker.utils.StringUtils;
+import com.zst.mq.client.core.exception.PublishException;
 import com.zst.mq.client.transport.NettyTransport;
 import com.zst.mq.client.transport.ResponseFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -133,8 +129,15 @@ public class MQClient implements Closeable {
             if (responseActionFrame.getAction() != ActionType.PUBLISH_ACK) {
                 throw new RuntimeException();
             }
+
+            PublishAckFrame publishAckFrame = JSON.parseObject(responseActionFrame.getContent(),
+                    PublishAckFrame.class);
+            if (!publishAckFrame.isSuccess()) {
+                throw new PublishException(publishAckFrame.getCause());
+            }
+
         } catch (Exception e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 

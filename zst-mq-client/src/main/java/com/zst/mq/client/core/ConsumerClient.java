@@ -98,7 +98,12 @@ public class ConsumerClient {
      * 提交消费偏移量
      */
     public void commitOffset() {
-        client.commitOffset(consumerProperties.getConsumerId(), queueName, commitedOffset);
+        if (currentOffset <= commitedOffset) {
+            return;
+        }
+
+        client.commitOffset(consumerProperties.getConsumerId(), queueName, currentOffset);
+        commitedOffset = currentOffset;
     }
 
     private void init() {
