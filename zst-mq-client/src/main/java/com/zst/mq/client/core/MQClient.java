@@ -13,16 +13,17 @@ import com.zst.mq.client.transport.NettyTransport;
 import com.zst.mq.client.transport.ResponseFuture;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class MQClient {
+public class MQClient implements Closeable {
     private ClientProperties clientProperties;
     private NettyTransport transport;
-    private ScheduledExecutorService executor;
 
     public MQClient() {
     }
@@ -30,21 +31,24 @@ public class MQClient {
     public MQClient(ClientProperties clientProperties, NettyTransport transport) {
         this.transport = transport;
         this.clientProperties = clientProperties;
-        executor = Executors.newSingleThreadScheduledExecutor();
-        init();
+    }
+
+    @Override
+    public void close() {
+        transport.close();
     }
 
     /**
      * 订阅队列
      * @param queueName
      */
-    public void subscribeQueue(String queueName) {
+    public void subscribeQueue(String consumerId, String queueName) {
         if (StringUtils.isEmpty(queueName)) {
             throw new IllegalArgumentException();
         }
 
         ActionFrame frame = new ActionFrame(ActionType.SUBSCRIBE_QUEUE);
-        frame.setConsumerId(clientProperties.getConsumerId());
+        frame.setConsumerId(consumerId);
 
         SubscribeRequestFrame subscribeRequestFrame = new SubscribeRequestFrame();
         subscribeRequestFrame.setQueueName(queueName);
@@ -71,8 +75,12 @@ public class MQClient {
      * @param consumerId
      * @return
      */
-    public Map<String, Long> fetchOffset() {
-        ActionFrame actionFrame = createActionFrame(ActionType.FETCH_CONSUMPTION_OFFSET, clientProperties.getConsumerId(),
+    public Map<String, Long> fetchOffset(String consumerId) {
+        if (StringUtils.isEmpty(consumerId)) {
+            throw new IllegalArgumentException();
+        }
+
+        ActionFrame actionFrame = createActionFrame(ActionType.FETCH_CONSUMPTION_OFFSET, consumerId,
                 null, null);
         TransportFrame transportFrame = wrapTransportFrame(actionFrame);
 
@@ -103,7 +111,7 @@ public class MQClient {
         PublishMessageFrame pmf = new PublishMessageFrame();
         pmf.setMessage(message);
 
-        ActionFrame actionFrame = createActionFrame(ActionType.PUBLISH_MESSAGE, clientProperties.getConsumerId(),
+        ActionFrame actionFrame = createActionFrame(ActionType.PUBLISH_MESSAGE, null,
                 pmf, null);
         TransportFrame transportFrame = wrapTransportFrame(actionFrame);
 
@@ -126,20 +134,9 @@ public class MQClient {
         }
     }
 
-    private void init() {
-        scheduleHeartbeat();
-    }
-
-    private void scheduleHeartbeat() {
-        executor.scheduleAtFixedRate(() -> {
-            sendHeartbeat();
-            log.debug("send heartbeat");
-        }, 0, clientProperties.getHeartbeatIntervalMs(), TimeUnit.MILLISECONDS);
-    }
-
-    private void sendHeartbeat() {
+    public void sendHeartbeat(String consumerId) {
         ActionFrame frame = new ActionFrame(ActionType.HEARTBEAT);
-        frame.setConsumerId(clientProperties.getConsumerId());
+        frame.setConsumerId(consumerId);
 
         TransportFrame transportFrame = wrapTransportFrame(frame);
         transport.send(transportFrame, true, false);
@@ -165,4 +162,6 @@ public class MQClient {
     private ActionFrame unwrapTransportFrame(TransportFrame transportFrame) {
         return JSON.parseObject(transportFrame.getActionFrameContent(), ActionFrame.class);
     }
+
+
 }

@@ -13,8 +13,11 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.Closeable;
+import java.io.IOException;
+
 @Slf4j
-public class NettyTransport {
+public class NettyTransport implements Closeable {
     private EventLoopGroup eventLoopGroup;
     private Channel channel;
     private BrokerProperties brokerProperties;
@@ -23,6 +26,11 @@ public class NettyTransport {
     public NettyTransport(BrokerProperties brokerProperties) {
         this.brokerProperties = brokerProperties;
         responseFutureHolder = new ResponseFutureHolder();
+    }
+
+    @Override
+    public void close() {
+        stop();
     }
 
     public void start() {
@@ -84,9 +92,19 @@ public class NettyTransport {
     }
 
     public void stop() {
+        if (channel != null) {
+            try {
+                channel.close().sync();
+            } catch (Exception e) {
+                log.error("关闭客户端连接时发生错误", e);
+            }
+        }
+
         if (eventLoopGroup != null && !eventLoopGroup.isShutdown()) {
             eventLoopGroup.shutdownGracefully();
             eventLoopGroup = null;
         }
     }
+
+
 }

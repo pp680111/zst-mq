@@ -17,7 +17,9 @@ public class ConsumerClient_IntegrateTest {
         ClientProperties cp = new ClientProperties();
         MQClient client = new MQClient(cp, nettyTransport);
 
-        ConsumerClient cc = new ConsumerClient(client, "zst-queue");
+        ConsumerProperties consumerProperties = new ConsumerProperties();
+
+        ConsumerClient cc = new ConsumerClient(client, "zst-queue", consumerProperties);
         cc.start();
     }
 }
