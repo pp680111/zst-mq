@@ -116,7 +116,7 @@ public class ActionHandler {
             broker.publishMessages(publishMessageFrame.getMessage());
             publishAckFrame.setSuccess(true);
         } catch (BrokerException e) {
-            publishAckFrame.setCause(e.getMessage());
+            publishAckFrame.setCause(ErrorCode.getErrorCodeDesc(e.getErrCode()));
             publishAckFrame.setSuccess(false);
         } catch (Exception e) {
             publishAckFrame.setCause("未知错误");

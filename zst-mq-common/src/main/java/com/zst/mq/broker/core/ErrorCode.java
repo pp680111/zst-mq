@@ -30,7 +30,7 @@ public interface ErrorCode {
     int INVALID_CONSUMPTION_OFFSET = 10006;
 
 
-    default String getErrorCodeDesc(int errCode) {
+    static String getErrorCodeDesc(int errCode) {
         switch (errCode) {
             case CONSUMER_NOT_EXIST:
                 return "消费者不存在";

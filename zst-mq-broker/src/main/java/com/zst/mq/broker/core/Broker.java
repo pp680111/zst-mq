@@ -203,6 +203,8 @@ public class Broker {
             throw new BrokerException(ErrorCode.INVALID_CONSUMPTION_OFFSET);
         }
 
+        log.debug(MessageFormat.format("Consumer {0} commit queue {1} consumption offset {2}",
+                consumerId, queueName, offset));
         subscription.updateQueueOffset(queueName, offset);
     }
 
