@@ -13,11 +13,8 @@ import com.zst.mq.client.transport.ResponseFuture;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j

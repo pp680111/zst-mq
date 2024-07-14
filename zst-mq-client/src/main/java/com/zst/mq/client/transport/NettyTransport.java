@@ -4,17 +4,12 @@ import com.zst.mq.broker.transport.FrameDecoder;
 import com.zst.mq.broker.transport.FrameEncoder;
 import com.zst.mq.broker.transport.TransportFrame;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 @Slf4j
 public class NettyTransport implements Closeable {

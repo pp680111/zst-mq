@@ -1,7 +1,5 @@
 package com.zst.mq.broker.core.exception;
 
-import lombok.Getter;
-
 public class BrokerException extends RuntimeException {
     int errCode;
 

@@ -18,6 +18,6 @@ public class ProducerClient_IntegrateTest {
         MQClient client = new MQClient(cp, nettyTransport);
 
         ProducerClient pc = new ProducerClient(client);
-        pc.publish("zst-queue", "hello world", false);
+        pc.publish("zst-queue", "hello world", true);
     }
 }

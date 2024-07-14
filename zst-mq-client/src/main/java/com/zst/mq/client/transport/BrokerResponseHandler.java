@@ -1,7 +1,6 @@
 package com.zst.mq.client.transport;
 
 import com.zst.mq.broker.transport.TransportFrame;
-import com.zst.mq.client.core.MQClient;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.AllArgsConstructor;
