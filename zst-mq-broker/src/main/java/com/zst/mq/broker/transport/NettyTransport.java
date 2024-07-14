@@ -79,7 +79,8 @@ public class NettyTransport {
             channel.pipeline()
                     .addLast(new FrameDecoder())
                     .addLast(new FrameEncoder())
-                    .addLast(new DataFrameHandler(actionHandler));
+                    .addLast(new DataFrameHandler(actionHandler))
+                    .addLast(new ClientCloseHandler());
         }
     }
 }
