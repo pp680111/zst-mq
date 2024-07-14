@@ -194,6 +194,15 @@ public class Broker {
             throw new BrokerException(ErrorCode.CONSUMER_NOT_SUBSCRIBE);
         }
 
+        Queue queue = queueMap.get(queueName);
+        if (queue == null) {
+            throw new BrokerException(ErrorCode.QUEUE_NOT_EXIST);
+        }
+        long queueCurrentOffset = queue.currentOffset();
+        if (offset > queueCurrentOffset) {
+            throw new BrokerException(ErrorCode.INVALID_CONSUMPTION_OFFSET);
+        }
+
         subscription.updateQueueOffset(queueName, offset);
     }
 

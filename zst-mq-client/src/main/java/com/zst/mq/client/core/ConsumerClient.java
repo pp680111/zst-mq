@@ -1,9 +1,13 @@
 package com.zst.mq.client.core;
 
+import com.zst.mq.broker.core.Message;
+import com.zst.mq.broker.utils.NamedThreadFactory;
 import com.zst.mq.broker.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -52,6 +56,10 @@ public class ConsumerClient {
 
     public void start() {
         try {
+            this.executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory(
+                    "consumer-" + consumerProperties.getConsumerId() + "-heartbeat-worker"));
+            init();
+
             client.sendHeartbeat(consumerProperties.getConsumerId());
             client.subscribeQueue(consumerProperties.getConsumerId(), queueName);
             Map<String, Long> consumerOffsets = client.fetchOffset(consumerProperties.getConsumerId());
@@ -61,9 +69,36 @@ public class ConsumerClient {
             } else {
                 log.error("当前订阅的队列Broker未返回队列的offset，以默认offset=0开始");
             }
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public List<Message> fetchMessage() {
+        List<Message> messages = client.fetchMessage(consumerProperties.getConsumerId(), queueName, currentOffset, 10);
+
+        // 记录一下本次拉取的消息的最大偏移量
+        long maxOffsetInBatch = 0;
+        if (messages != null && messages.size() > 0) {
+            for (Message message : messages) {
+                if (message.getOffset() > maxOffsetInBatch) {
+                    maxOffsetInBatch = message.getOffset();
+                }
+            }
+        }
+        if (maxOffsetInBatch > 0) {
+            currentOffset = maxOffsetInBatch;
+        }
+
+        return messages;
+    }
+
+    /**
+     * 提交消费偏移量
+     */
+    public void commitOffset() {
+        client.commitOffset(consumerProperties.getConsumerId(), queueName, commitedOffset);
     }
 
     private void init() {

@@ -23,6 +23,13 @@ public class Message {
         return properties.get("messageId");
     }
 
+    public long getOffset() {
+        if (properties.get("offset") == null) {
+            return -1;
+        }
+        return Long.parseLong(properties.get("offset"));
+    }
+
     public void setQueueName(String queueName) {
         this.properties.put("queue", queueName);
     }

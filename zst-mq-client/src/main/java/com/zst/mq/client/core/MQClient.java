@@ -4,7 +4,10 @@ import com.alibaba.fastjson2.JSON;
 import com.zst.mq.broker.core.ActionFrame;
 import com.zst.mq.broker.core.ActionType;
 import com.zst.mq.broker.core.Message;
+import com.zst.mq.broker.core.frame.FetchMessageRequestFrame;
+import com.zst.mq.broker.core.frame.FetchMessageResponseFrame;
 import com.zst.mq.broker.core.frame.FetchOffsetResponseFrame;
+import com.zst.mq.broker.core.frame.OffsetCommitRequestFrame;
 import com.zst.mq.broker.core.frame.PublishMessageFrame;
 import com.zst.mq.broker.core.frame.SubscribeRequestFrame;
 import com.zst.mq.broker.transport.TransportFrame;
@@ -15,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -131,6 +135,71 @@ public class MQClient implements Closeable {
             }
         } catch (Exception e) {
             throw new RuntimeException();
+        }
+    }
+
+    /**
+     * 获取消息
+     * @param consumerId
+     * @param queueName
+     * @param beginOffset
+     * @param maxBatch
+     * @return
+     */
+    public List<Message> fetchMessage(String consumerId, String queueName, long beginOffset, int maxBatch) {
+        FetchMessageRequestFrame requestFrame = new FetchMessageRequestFrame();
+        requestFrame.setQueueName(queueName);
+        requestFrame.setMaxBatch(maxBatch);
+        requestFrame.setBeginOffset(beginOffset);
+
+        ActionFrame actionFrame = createActionFrame(ActionType.FETCH_MESSAGE, consumerId,
+                requestFrame, null);
+        TransportFrame transportFrame = wrapTransportFrame(actionFrame);
+
+        try {
+            ResponseFuture future = transport.send(transportFrame, true, true);
+            TransportFrame response = future.get(clientProperties.getResponseTimeoutMs(), TimeUnit.MILLISECONDS);
+            ActionFrame responseActionFrame = unwrapTransportFrame(response);
+
+            if (responseActionFrame.getAction() != ActionType.FETCH_MESSAGE_RESPONSE) {
+                // TODO 异常处理待完善
+                throw new RuntimeException("请求失败");
+            }
+
+            FetchMessageResponseFrame fetchMessageResponseFrame = JSON.parseObject(responseActionFrame.getContent(),
+                    FetchMessageResponseFrame.class);
+            return fetchMessageResponseFrame.getMessages();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 提交指定consumerId对指定队列的消费偏移量
+     * @param consumerId
+     * @param queueName
+     * @param offset
+     */
+    public void commitOffset(String consumerId, String queueName, long offset) {
+        OffsetCommitRequestFrame requestFrame = new OffsetCommitRequestFrame();
+        requestFrame.setQueueName(queueName);
+        requestFrame.setOffset(offset);
+
+        ActionFrame actionFrame = createActionFrame(ActionType.SUBMIT_OFFSET, consumerId,
+                requestFrame, null);
+        TransportFrame transportFrame = wrapTransportFrame(actionFrame);
+
+        try {
+            ResponseFuture future = transport.send(transportFrame, true, true);
+            TransportFrame response = future.get(clientProperties.getResponseTimeoutMs(), TimeUnit.MILLISECONDS);
+            ActionFrame responseActionFrame = unwrapTransportFrame(response);
+
+            if (responseActionFrame.getAction() != ActionType.OK) {
+                // TODO 异常处理待完善
+                throw new RuntimeException("请求失败");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

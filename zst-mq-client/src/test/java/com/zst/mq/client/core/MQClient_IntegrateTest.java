@@ -1,6 +1,7 @@
 package com.zst.mq.client.core;
 
 import com.alibaba.fastjson2.JSON;
+import com.zst.mq.broker.core.Message;
 import com.zst.mq.client.transport.BrokerProperties;
 import com.zst.mq.client.transport.NettyTransport;
 import com.zst.mq.client.utils.PrivateAccessor;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.locks.LockSupport;
@@ -85,5 +87,25 @@ public class MQClient_IntegrateTest {
         Map<String, Long> offset = client.fetchOffset(consumerId);
         Assertions.assertTrue(offset.containsKey("zst-queue"));
         System.err.println(JSON.toJSONString(offset));
+    }
+
+    @Test
+    public void testFetchMessage() {
+        BrokerProperties bp = new BrokerProperties();
+        bp.setHost("127.0.0.1");
+        bp.setPort(6464);
+
+        NettyTransport nettyTransport = new NettyTransport(bp);
+        nettyTransport.start();
+
+        ClientProperties cp = new ClientProperties();
+        MQClient client = new MQClient(cp, nettyTransport);
+
+        String consumerId = UUID.randomUUID().toString();
+        client.sendHeartbeat(consumerId);
+        client.subscribeQueue(consumerId, "zst-queue");
+        List<Message> messageList = client.fetchMessage(consumerId, "zst-queue", 0, 10);
+        System.err.println(JSON.toJSONString(messageList));
+
     }
 }

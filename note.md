@@ -6,6 +6,7 @@ TODO:
 * 实现消息的持久化
 * queue中消息的定期处理，防止内存占用过多
 * 完善client和broker的异常处理
+* 有时候会偶发的发不出消息，需要看看是什么问题
 
 
 consumer和queue的订阅关系可以抽象为Subscription类，在里面记录QueueId或topicId、consumerId和offset，offset也能用来区分不同consumer的

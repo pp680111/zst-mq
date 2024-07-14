@@ -4,7 +4,9 @@ import com.zst.mq.broker.core.exception.BrokerException;
 import com.zst.mq.broker.utils.StringUtils;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.Map;
 
 @Getter
 @Setter
+@Slf4j
 public class Subscription {
     private String consumerId;
     private List<String> queues = new ArrayList<>();
@@ -28,7 +31,9 @@ public class Subscription {
         }
 
         if (queues.contains(queueName)) {
-            throw new BrokerException(ErrorCode.DUPLICATE_SUBSCRIBE);
+//            throw new BrokerException(ErrorCode.DUPLICATE_SUBSCRIBE);
+            log.info(MessageFormat.format("消费者重复订阅队列{0},已无视", queueName));
+            return;
         }
 
         queues.add(queueName);
