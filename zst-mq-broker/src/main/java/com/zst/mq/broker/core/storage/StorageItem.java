@@ -1,10 +1,8 @@
 package com.zst.mq.broker.core.storage;
 
-import com.alibaba.fastjson2.JSON;
 import lombok.Getter;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
 @Getter
 public class StorageItem {
@@ -12,18 +10,12 @@ public class StorageItem {
     private long size;
     private byte[] content;
 
-    public StorageItem(Object data) {
-        if (data == null) {
-            throw new IllegalArgumentException();
+    public StorageItem(byte[] content) {
+        if (content == null) {
+            throw new IllegalArgumentException("content is null");
         }
 
-        String jsonContent = JSON.toJSONString(data);
-        content = jsonContent.getBytes(StandardCharsets.UTF_8);
-        size = content.length;
-    }
-
-    private StorageItem(long size, byte[] content) {
-        this.size = size;
+        this.size = content.length;
         this.content = content;
     }
 
@@ -31,10 +23,6 @@ public class StorageItem {
         buffer.put(MAGIC_BYTES);
         buffer.putLong(size);
         buffer.put(content);
-    }
-
-    public <T> T deserialize(Class<T> clazz) {
-        return JSON.parseObject(content, clazz);
     }
 
     /**
@@ -53,10 +41,10 @@ public class StorageItem {
             }
         }
 
-        long size = buffer.getLong(3);
+        long size = buffer.getLong();
         byte[] content = new byte[(int) size];
         // 跳过3byte的magic bytes和8byte的long的大小之后再开始读取
-        buffer.get(content, 11, (int) size);
-        return new StorageItem(size, content);
+        buffer.get(content);
+        return new StorageItem(content);
     }
 }
