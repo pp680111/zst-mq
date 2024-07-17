@@ -19,10 +19,12 @@ public class StorageItem {
         this.content = content;
     }
 
-    public void writeTo(ByteBuffer buffer) {
+    public long writeTo(ByteBuffer buffer) {
+        long beginPosition = buffer.position();
         buffer.put(MAGIC_BYTES);
         buffer.putLong(size);
         buffer.put(content);
+        return beginPosition;
     }
 
     /**
