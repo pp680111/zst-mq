@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 public class QueueStorage {
     private String queueName;
@@ -31,10 +32,13 @@ public class QueueStorage {
         try {
             Path filePath = Paths.get(storagePath, queueName, queueName + "_00.dat");
             if (!Files.exists(filePath)) {
-                Files.createFile(filePath);
+                File file = filePath.toFile();
+                file.getParentFile().mkdirs();
+                file.createNewFile();
             }
 
-            FileChannel fileChannel = (FileChannel) Files.newByteChannel(filePath);
+            FileChannel fileChannel = (FileChannel) Files.newByteChannel(filePath,
+                    StandardOpenOption.READ, StandardOpenOption.WRITE);
             this.fileBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, maxFileSize);
         } catch (Exception e) {
             throw new StorageException("初始化数据存储时发生错误", e);
@@ -70,5 +74,12 @@ public class QueueStorage {
         } catch (Exception e) {
             throw new StorageException("读取消息数据时发生错误", e);
         }
+    }
+
+    /**
+     * 初始化buffer，恢复position到最后的空白位置
+     */
+    private void initBuffer() {
+
     }
 }
