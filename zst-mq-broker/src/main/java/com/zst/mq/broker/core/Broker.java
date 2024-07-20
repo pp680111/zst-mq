@@ -2,8 +2,10 @@ package com.zst.mq.broker.core;
 
 import com.alibaba.fastjson2.JSON;
 import com.zst.mq.broker.core.exception.BrokerException;
+import com.zst.mq.broker.core.storage.QueueStorageManager;
 import com.zst.mq.broker.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Assert;
 
 import java.text.MessageFormat;
 import java.util.HashMap;
@@ -29,10 +31,15 @@ public class Broker {
      */
     private Map<String, Consumer> consumerMap;
 
-    public Broker() {
+    private QueueStorageManager queueStorageManager;
+
+    public Broker(QueueStorageManager queueStorageManager) {
+        Assert.notNull(queueStorageManager, "queueStorageManager is null");
+
         queueMap = new HashMap<>();
         subscriptions = new HashMap<>();
         consumerMap = new HashMap<>();
+        this.queueStorageManager = queueStorageManager;
     }
 
     /**
@@ -87,7 +94,7 @@ public class Broker {
 
         log.debug("create queue {}", queueName);
 
-        queue = new Queue(queueName);
+        queue = new Queue(queueName, queueStorageManager.getQueueStorage(queueName));
         queueMap.put(queueName, queue);
     }
 

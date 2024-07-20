@@ -1,7 +1,9 @@
 package com.zst.mq.broker.core;
 
+import com.zst.mq.broker.core.storage.QueueStorage;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,9 +16,14 @@ import java.util.Map;
 public class Queue {
     private Deque<QueueMessage> queue;
     private String name;
+    private QueueStorage queueStorage;
 
-    public Queue(String name) {
+    public Queue(String name, QueueStorage queueStorage) {
+        Assert.hasText(name, "name must not be null");
+        Assert.notNull(queueStorage, "queueStorage must not be null");
+
         this.name = name;
+        this.queueStorage = queueStorage;
         queue = new LinkedList<>();
     }
 

@@ -2,6 +2,8 @@ package com.zst.mq.broker.bootstrap;
 
 import com.zst.mq.broker.core.ActionHandler;
 import com.zst.mq.broker.core.Broker;
+import com.zst.mq.broker.core.BrokerProperties;
+import com.zst.mq.broker.core.storage.QueueStorageManager;
 import com.zst.mq.broker.transport.NettyTransport;
 import com.zst.mq.broker.transport.NettyTransportProperties;
 import org.springframework.context.annotation.Bean;
@@ -13,8 +15,21 @@ import java.util.Optional;
 @Configuration
 public class ContextConfiguration {
     @Bean
-    public Broker broker() {
-        return new Broker();
+    public BrokerProperties brokerProperties(Environment environment) {
+        BrokerProperties properties = new BrokerProperties();
+        Optional.ofNullable(environment.getProperty("broker.storagePath"))
+                .ifPresent(properties::setStoragePath);
+        return properties;
+    }
+
+    @Bean
+    public QueueStorageManager queueStorageManager(BrokerProperties brokerProperties) {
+        return new QueueStorageManager(brokerProperties.getStoragePath());
+    }
+
+    @Bean
+    public Broker broker(QueueStorageManager queueStorageManager) {
+        return new Broker(queueStorageManager);
     }
 
     @Bean
