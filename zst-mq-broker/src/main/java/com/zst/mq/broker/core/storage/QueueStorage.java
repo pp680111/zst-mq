@@ -3,7 +3,9 @@ package com.zst.mq.broker.core.storage;
 import com.alibaba.fastjson2.JSON;
 import com.zst.mq.broker.core.Message;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -12,10 +14,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 
-public class QueueStorage {
+public class QueueStorage implements Closeable {
+    private static final byte[] MAGIC_BYTES = new byte[] {0x44, 0x33, 0x22};
+
     private String queueName;
     private String storagePath;
+    private List<Long> offsetIndex;
     /**
      * 默认存储文件大小上限
      */
@@ -40,9 +47,18 @@ public class QueueStorage {
             FileChannel fileChannel = (FileChannel) Files.newByteChannel(filePath,
                     StandardOpenOption.READ, StandardOpenOption.WRITE);
             this.fileBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, maxFileSize);
+
+            this.offsetIndex = new ArrayList<>();
+            initBuffer();
         } catch (Exception e) {
             throw new StorageException("初始化数据存储时发生错误", e);
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        offsetIndex = null;
+        this.fileBuffer = null;
     }
 
     /**
@@ -55,9 +71,15 @@ public class QueueStorage {
             throw new IllegalArgumentException();
         }
 
+        long currentIndex = this.fileBuffer.position();
+
         String content = JSON.toJSONString(message);
-        StorageItem storageItem = new StorageItem(content.getBytes(StandardCharsets.UTF_8));
-        return storageItem.writeTo(this.fileBuffer);
+        this.fileBuffer.put(MAGIC_BYTES);
+        this.fileBuffer.putLong(content.length());
+        this.fileBuffer.put(content.getBytes(StandardCharsets.UTF_8));
+
+        this.offsetIndex.add(currentIndex);
+        return currentIndex;
     }
 
     /**
@@ -66,11 +88,27 @@ public class QueueStorage {
      * @return
      */
     public Message get(long offset) {
+        if (!offsetIndex.contains(offset)) {
+            throw new StorageException("偏移量参数值错误");
+        }
+
         try {
             ByteBuffer roBuffer = this.fileBuffer.asReadOnlyBuffer();
             roBuffer.position((int) offset);
-            StorageItem storageItem = StorageItem.readFrom(roBuffer);
-            return JSON.parseObject(new String(storageItem.getContent(), StandardCharsets.UTF_8), Message.class);
+
+            byte[] headPart = new byte[3];
+            roBuffer.get(headPart, 0, 3);
+
+            for (int i = 0; i < MAGIC_BYTES.length; i++) {
+                if (headPart[i] != MAGIC_BYTES[i]) {
+                    throw new StorageException("解析数据失败");
+                }
+            }
+            long size = roBuffer.getLong();
+            byte[] content = new byte[(int) size];
+            roBuffer.get(content);
+
+            return JSON.parseObject(new String(content, StandardCharsets.UTF_8), Message.class);
         } catch (Exception e) {
             throw new StorageException("读取消息数据时发生错误", e);
         }
@@ -80,6 +118,24 @@ public class QueueStorage {
      * 初始化buffer，恢复position到最后的空白位置
      */
     private void initBuffer() {
+        while (true) {
+            long i = this.fileBuffer.position();
 
+            byte[] headPart = new byte[3];
+            this.fileBuffer.get(headPart);
+
+            if (headPart[0] != MAGIC_BYTES[0]
+                    && headPart[1] != MAGIC_BYTES[1]
+                    && headPart[2] != MAGIC_BYTES[2]) {
+                // 如果读不到magic_bytes，就回滚一下index
+                this.fileBuffer.position((int) i);
+                break;
+            }
+
+            offsetIndex.add(i);
+
+            long size = this.fileBuffer.getLong();
+            this.fileBuffer.position((int) (i + 3 + 8 + size));
+        }
     }
 }
