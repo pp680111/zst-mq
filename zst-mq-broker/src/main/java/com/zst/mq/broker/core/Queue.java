@@ -1,8 +1,10 @@
 package com.zst.mq.broker.core;
 
+import com.zst.mq.broker.core.exception.BrokerException;
 import com.zst.mq.broker.core.storage.QueueStorage;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 public class Queue {
     private Deque<QueueMessage> queue;
     private String name;
@@ -24,6 +27,7 @@ public class Queue {
 
         this.name = name;
         this.queueStorage = queueStorage;
+        queueStorage.init();
         queue = new LinkedList<>();
     }
 
@@ -47,11 +51,18 @@ public class Queue {
      */
     public long addMessage(Message message) {
         synchronized (this) {
-            QueueMessage queueMessage = new QueueMessage();
-            queueMessage.setMessage(message);
-            queueMessage.setOffset(currentOffset() + 1);
-            queue.add(queueMessage);
-            return queueMessage.getOffset();
+            try {
+                long offset = queueStorage.write(message);
+
+                QueueMessage queueMessage = new QueueMessage();
+                queueMessage.setMessage(message);
+                queueMessage.setOffset(offset);
+                queue.add(queueMessage);
+                return queueMessage.getOffset();
+            } catch (Exception e) {
+
+                throw new BrokerException(ErrorCode.MESSAGE_PUBLISH_ERROR, "add message error");
+            }
         }
     }
 
@@ -68,7 +79,7 @@ public class Queue {
 
         List<Message> result = new ArrayList<>();
         for (QueueMessage queueMessage : queue) {
-            if (queueMessage.getOffset() > beginOffset) {
+            if (queueMessage.getOffset() >= beginOffset) {
                 result.add(queueMessage.getMessageForFetch());
                 if (result.size() >= batchNum) {
                     break;
