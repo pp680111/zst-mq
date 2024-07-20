@@ -28,6 +28,10 @@ public interface ErrorCode {
      * 无效消费OFFSET
      */
     int INVALID_CONSUMPTION_OFFSET = 10006;
+    /**
+     * 消息添加失败
+     */
+    int MESSAGE_PUBLISH_ERROR = 10007;
 
 
     static String getErrorCodeDesc(int errCode) {
@@ -44,6 +48,8 @@ public interface ErrorCode {
                 return "队列已存在";
             case INVALID_CONSUMPTION_OFFSET:
                 return "无效消费OFFSET";
+            case MESSAGE_PUBLISH_ERROR:
+                return "消息添加失败";
             default:
                 return "未知错误";
         }

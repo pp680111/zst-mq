@@ -1,5 +1,6 @@
 package com.zst.mq.broker.core;
 
+import com.zst.mq.broker.core.storage.QueueStorageManager;
 import com.zst.mq.broker.utils.PrivateAccessor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -7,10 +8,14 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.Mockito.mock;
+
 public class BrokerTest {
     @Test
     public void addSubscription_hasConsumerAndQueue() {
-        Broker broker = new Broker();
+        QueueStorageManager queueStorage = mock(QueueStorageManager.class);
+        Broker broker = new Broker(queueStorage);
+
         broker.createQueue("zst");
         broker.updateConsumerHeartbeat("tsz");
 
