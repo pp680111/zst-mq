@@ -17,9 +17,9 @@ import java.util.Map;
 
 @Slf4j
 public class Queue {
-    private Deque<QueueMessage> queue;
     private String name;
     private QueueStorage queueStorage;
+
 
     public Queue(String name, QueueStorage queueStorage) {
         Assert.hasText(name, "name must not be null");
@@ -28,7 +28,6 @@ public class Queue {
         this.name = name;
         this.queueStorage = queueStorage;
         queueStorage.init();
-        queue = new LinkedList<>();
     }
 
     /**
@@ -36,12 +35,7 @@ public class Queue {
      * @return
      */
     public long currentOffset() {
-        QueueMessage headMessage = queue.peekLast();
-        if (headMessage != null) {
-            return headMessage.getOffset();
-        }
-
-        return 0;
+        return queueStorage.lastOffset();
     }
 
     /**
@@ -52,12 +46,13 @@ public class Queue {
     public long addMessage(Message message) {
         synchronized (this) {
             try {
-                long offset = queueStorage.write(message);
 
                 QueueMessage queueMessage = new QueueMessage();
                 queueMessage.setMessage(message);
-                queueMessage.setOffset(offset);
-                queue.add(queueMessage);
+                queueMessage.setOffset(queueStorage.currentOffset());
+
+                this.queueStorage.write(queueMessage);
+
                 return queueMessage.getOffset();
             } catch (Exception e) {
 
@@ -73,21 +68,8 @@ public class Queue {
      * @return
      */
     public List<Message> fetchMessage(long beginOffset, int batchNum) {
-        if (queue.isEmpty() || queue.peekLast().getOffset() <= beginOffset) {
-            return Collections.emptyList();
-        }
-
-        List<Message> result = new ArrayList<>();
-        for (QueueMessage queueMessage : queue) {
-            if (queueMessage.getOffset() >= beginOffset) {
-                result.add(queueMessage.getMessageForFetch());
-                if (result.size() >= batchNum) {
-                    break;
-                }
-            }
-        }
-
-        return result;
+        List<QueueMessage> queueMessages = queueStorage.fetch(beginOffset, batchNum);
+        return queueMessages.stream().map(QueueMessage::getMessageForFetch).toList();
     }
 
     /**
@@ -95,7 +77,7 @@ public class Queue {
      */
     @Setter
     @Getter
-    private class QueueMessage {
+    public static class QueueMessage {
         private Message message;
         private long offset;
 

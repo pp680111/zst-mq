@@ -2,6 +2,8 @@ package com.zst.mq.broker.core.storage;
 
 import com.alibaba.fastjson2.JSON;
 import com.zst.mq.broker.core.Message;
+import com.zst.mq.broker.core.Queue;
+import org.springframework.util.Assert;
 
 import java.io.Closeable;
 import java.io.File;
@@ -15,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class QueueStorage implements Closeable {
@@ -66,7 +69,7 @@ public class QueueStorage implements Closeable {
      * @param message
      * @return
      */
-    public long write(Message message) {
+    public long write(Queue.QueueMessage message) {
         if (message == null) {
             throw new IllegalArgumentException();
         }
@@ -87,7 +90,7 @@ public class QueueStorage implements Closeable {
      * @param offset
      * @return
      */
-    public Message get(long offset) {
+    public Queue.QueueMessage get(long offset) {
         if (!offsetIndex.contains(offset)) {
             throw new StorageException("偏移量参数值错误");
         }
@@ -108,10 +111,56 @@ public class QueueStorage implements Closeable {
             byte[] content = new byte[(int) size];
             roBuffer.get(content);
 
-            return JSON.parseObject(new String(content, StandardCharsets.UTF_8), Message.class);
+            return JSON.parseObject(new String(content, StandardCharsets.UTF_8), Queue.QueueMessage.class);
         } catch (Exception e) {
             throw new StorageException("读取消息数据时发生错误", e);
         }
+    }
+
+    /**
+     * 批量获取消息
+     * @param beginOffset
+     * @param batchNum
+     * @return
+     */
+    public List<Queue.QueueMessage> fetch(long beginOffset, int batchNum) {
+        Assert.isTrue(beginOffset >= 0, "偏移量参数值错误");
+
+        if (offsetIndex.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Queue.QueueMessage> result = new ArrayList<>();
+        for (Long offset : offsetIndex) {
+            if (offset >= beginOffset) {
+                result.add(get(offset));
+
+                if (result.size() >= batchNum) {
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * 获取当前最后一条消息的offset
+     * @return
+     */
+    public long lastOffset() {
+        if (offsetIndex.isEmpty()) {
+            return 0L;
+        }
+        return this.offsetIndex.get(this.offsetIndex.size() - 1);
+    }
+
+    /**
+     * 获取当前偏移量
+     * @return
+     */
+    public long currentOffset() {
+        return this.fileBuffer.position();
     }
 
     /**

@@ -2,6 +2,7 @@ package com.zst.mq.broker.core.storage;
 
 import com.alibaba.fastjson2.JSON;
 import com.zst.mq.broker.core.Message;
+import com.zst.mq.broker.core.Queue;
 import com.zst.mq.broker.utils.PrivateAccessor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -41,12 +42,16 @@ public class QueueStorageTest {
         prop.put("h", "s");
         message.setProperties(prop);
 
-        System.err.println(queueStorage.write(message));
+        Queue.QueueMessage qm = new Queue.QueueMessage();
+        qm.setMessage(message);
+
+        System.err.println(queueStorage.write(qm));
     }
 
     @Test
     public void testInitBuffer_emptyData() throws IOException {
         Path filePath = Paths.get(".", "zst.dat");
+        filePath.toFile().delete();
         filePath.toFile().createNewFile();
 
         FileChannel fileChannel = (FileChannel) Files.newByteChannel(filePath,
