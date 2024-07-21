@@ -1,7 +1,6 @@
 package com.zst.mq.broker.core.storage;
 
 import com.alibaba.fastjson2.JSON;
-import com.zst.mq.broker.core.Message;
 import com.zst.mq.broker.core.Queue;
 import org.springframework.util.Assert;
 
